@@ -30,6 +30,8 @@ extern "C" {
  * @brief   ARM Cortex-M specific CPU configuration
  * @{
  */
+#define THREAD_STACKSIZE_DEFAULT        (600)
+#define THREAD_STACKSIZE_MAIN           (850)
 #define CPU_DEFAULT_IRQ_PRIO            (1U)
 #define CPU_IRQ_NUMOF                   (26U)
 /** @} */
