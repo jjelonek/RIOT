@@ -162,6 +162,7 @@ class unique_lock {
 
 template <class Mutex>
 void unique_lock<Mutex>::lock() {
+#ifndef NOEXCEPTIONS
   if (m_mtx == nullptr) {
     throw std::system_error(
       std::make_error_code(std::errc::operation_not_permitted),
@@ -172,12 +173,14 @@ void unique_lock<Mutex>::lock() {
       std::make_error_code(std::errc::resource_deadlock_would_occur),
       "Already locked.");
   }
+#endif
   m_mtx->lock();
   m_owns = true;
 }
 
 template <class Mutex>
 bool unique_lock<Mutex>::try_lock() {
+#ifndef NOEXCEPTIONS
   if (m_mtx == nullptr) {
     throw std::system_error(
       std::make_error_code(std::errc::operation_not_permitted),
@@ -188,17 +191,20 @@ bool unique_lock<Mutex>::try_lock() {
       std::make_error_code(std::errc::resource_deadlock_would_occur),
       "Already locked.");
   }
+#endif
   m_owns = m_mtx->try_lock();
   return m_owns;
 }
 
 template <class Mutex>
 void unique_lock<Mutex>::unlock() {
+#ifndef NOEXCEPTIONS
   if (!m_owns) {
     throw std::system_error(
       std::make_error_code(std::errc::operation_not_permitted),
       "Mutex not locked.");
   }
+#endif
   m_mtx->unlock();
   m_owns = false;
 }

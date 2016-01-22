@@ -77,11 +77,15 @@ void condition_variable::notify_all() noexcept {
 }
 
 void condition_variable::wait(unique_lock<mutex>& lock) noexcept {
+#ifdef NOEXCEPTIONS
+  lock.owns_lock();
+#else
   if (!lock.owns_lock()) {
     throw std::system_error(
       std::make_error_code(std::errc::operation_not_permitted),
       "Mutex not locked.");
   }
+#endif
   priority_queue_node_t n;
   n.priority = sched_active_thread->priority;
   n.data = sched_active_pid;

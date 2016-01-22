@@ -36,10 +36,12 @@ thread::~thread() {
 }
 
 void thread::join() {
+#ifndef NOEXCEPTIONS
   if (this->get_id() == this_thread::get_id()) {
     throw system_error(make_error_code(errc::resource_deadlock_would_occur),
                        "Joining this leads to a deadlock.");
   }
+#endif
   if (joinable()) {
     auto status = thread_getstatus(m_handle);
     if (status != STATUS_NOT_FOUND && status != STATUS_STOPPED) {
@@ -47,20 +49,26 @@ void thread::join() {
       thread_sleep();
     }
     m_handle = thread_uninitialized;
-  } else {
+  }
+#ifndef NOEXCEPTIONS
+  else {
     throw system_error(make_error_code(errc::invalid_argument),
                        "Can not join an unjoinable thread.");
   }
+#endif
   // missing: no_such_process system error
 }
 
 void thread::detach() {
   if (joinable()) {
     m_handle = thread_uninitialized;
-  } else {
+  } 
+#ifndef NOEXCEPTIONS
+  else {
     throw system_error(make_error_code(errc::invalid_argument),
                        "Can not detach an unjoinable thread.");
   }
+#endif
 }
 
 unsigned thread::hardware_concurrency() noexcept {

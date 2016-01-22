@@ -47,7 +47,8 @@ namespace riot {
 
 namespace {
 constexpr kernel_pid_t thread_uninitialized = -1;
-constexpr size_t stack_size = THREAD_STACKSIZE_MAIN;
+//constexpr size_t stack_size = THREAD_STACKSIZE_MAIN;
+constexpr size_t stack_size = THREAD_STACKSIZE_DEFAULT;
 }
 
 struct thread_data {
@@ -204,12 +205,16 @@ void* thread_proxy(void* vp) {
     std::unique_ptr<thread_data, thread_data_deleter> data{tmp};
     // create indices for the arguments, 0 is thread_data and 1 is the function
     auto indices = detail::get_indices<std::tuple_size<Tuple>::value, 2>();
+#ifdef NOEXCEPTIONS
+    detail::apply_args(std::get<1>(*p), indices, *p);
+#else
     try {
       detail::apply_args(std::get<1>(*p), indices, *p);
     }
     catch (...) {
       // nop
     }
+#endif
     if (data->joining_thread != thread_uninitialized) {
       thread_wakeup(data->joining_thread);
     }
@@ -232,11 +237,14 @@ thread::thread(F&& f, Args&&... args)
     &thread_proxy<func_and_args>, p.get(), "riot_cpp_thread");
   if (m_handle >= 0) {
     p.release();
-  } else {
+  }
+#ifndef NOEXCEPTIONS
+  else {
     throw std::system_error(
       std::make_error_code(std::errc::resource_unavailable_try_again),
         "Failed to create thread.");
   }
+#endif
 }
 
 inline thread& thread::operator=(thread&& other) noexcept {
